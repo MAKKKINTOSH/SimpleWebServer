@@ -26,8 +26,8 @@ namespace SimpleWebServer
 
             localHostIPs.ForEach(ip =>
             {
-                listener.Prefixes.Add($"http://{ip.ToString()}/");
-                Console.WriteLine("IP: " + $"http://{ip.ToString()}/");
+                listener.Prefixes.Add($"http://{ip.ToString()}:8888/");
+                Console.WriteLine("IP: " + $"http://{ip.ToString()}:8888/");
             });
             return listener;
         }
@@ -38,14 +38,14 @@ namespace SimpleWebServer
         private static void Start(HttpListener listener)
         {
             listener.Start();
-            Task.Run(() => RunServer(listener));
+            Task.Run(RunServer(listener));
         }
         /// <summary>
         /// Start awaiting for connections, up to the max value.
         /// Code runs in a separate thread.
         /// </summary>
         /// <param name="listener"></param>
-        private static void RunServer(HttpListener listener) 
+        private static Action RunServer(HttpListener listener) 
         {
             while (true)
             {
@@ -62,17 +62,12 @@ namespace SimpleWebServer
             HttpListenerContext context = await listener.GetContextAsync();
             sem.Release();
 
-            Console.WriteLine("tuta");
-
-            var resp = context.Response;
-            string response = "<html><head><meta http-equiv='content-type' content='text/html; charset=utf-8'/></ head > Hello Browser! </ html > ";
+            Console.WriteLine("\n\n\n" + context.Request.Headers + "\n\n\n");
+            string response = "<html><head><meta http-equiv='content-type' content='text/html; charset=utf-8'/></ head >XD</ html > ";
             byte[] encoded = Encoding.UTF8.GetBytes(response);
-            resp.ContentLength64 = encoded.Length;
-            using Stream output = resp.OutputStream;
-            await output.WriteAsync(encoded);
-            await output.FlushAsync();
-
-            Console.WriteLine("a teper tuta");
+            context.Response.ContentLength64 = encoded.Length;
+            context.Response.OutputStream.Write(encoded, 0, encoded.Length);
+            context.Response.OutputStream.Close();
         }
 
         /// <summary>
